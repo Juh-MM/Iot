@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard ThingSpeak</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<h2>Dashboard - Dados do ThingSpeak</h2>
+<canvas id="grafico" width="800" height="400"></canvas>
+
+<script>
+const channelId = '2943258'; 
+const apiKey = 'G3BDQS6I5PRGFEWR'; 
+const url = `https://api.thingspeak.com/channels/${channelId}/feeds.json?api_key=${apiKey}&results=20`;
+
+axios.get(url)
+    .then(response => {
+        const feeds = response.data.feeds;
+
+        // Extrai e formata os dados
+        const labels = feeds.map(feed => {
+            let data = new Date(feed.created_at);
+            return data.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+        });
+
+        const valoresUmidade = feeds.map(feed => parseFloat(feed.field1));
+        const valoresTemperatura = feeds.map(feed => parseFloat(feed.field2));
+
+        // Cria o gráfico
+        const ctx = document.getElementById('grafico').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Umidade (%)',
+                        data: valoresUmidade,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Temperatura (°C)',
+                        data: valoresTemperatura,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: { display: true, text: 'Data/Hora' }
+                    },
+                    y: {
+                        display: true,
+                        title: { display: true, text: 'Valor' }
+                    }
+                }
+            }
+        });
+    })
+    .catch(error => {
+        console.error('Erro ao buscar dados:', error);
+    });
+</script>
+</body>
+</html>
